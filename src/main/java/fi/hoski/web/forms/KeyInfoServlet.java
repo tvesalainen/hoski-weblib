@@ -106,7 +106,7 @@ public class KeyInfoServlet extends HttpServlet {
       }
     } catch (EntityNotFoundException ex) {
       log(ex.getMessage(), ex);
-      throw new ServletException(ex);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } catch (JSONException ex) {
       log(ex.getMessage(), ex);
       throw new ServletException(ex);

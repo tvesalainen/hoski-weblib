@@ -143,7 +143,7 @@ public class RaceEntryServlet extends HttpServlet {
       throw new ServletException(ex);
     } catch (EntityNotFoundException ex) {
       log(ex.getMessage(), ex);
-      throw new ServletException(ex);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
   }
 

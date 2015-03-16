@@ -75,7 +75,7 @@ public class CustomCSSServlet extends HttpServlet {
       response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     } catch (EntityNotFoundException ex) {
       log(ex.getMessage(), ex);
-      throw new ServletException(ex);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
   }
 
