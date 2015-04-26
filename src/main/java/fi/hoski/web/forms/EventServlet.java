@@ -77,7 +77,12 @@ public class EventServlet extends HttpServlet {
       sendError(response, HttpServletResponse.SC_BAD_REQUEST,
         "<div id=\"eNoEvent\">Event parameter missing</div>");
       return;
+    } else if (Arrays.asList(eventKeys).contains(Event.EVENT_KEY_CHOOSE)) {
+      sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                "<div id='eChooseEvent'>Choose the event</div>");
+      return;
     }
+
     int count = 1;
     try {
       for (String eventKey : eventKeys) {
