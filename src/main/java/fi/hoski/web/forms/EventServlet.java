@@ -27,6 +27,7 @@ import fi.hoski.datastore.repository.Event.EventType;
 import fi.hoski.util.Day;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.Map;
