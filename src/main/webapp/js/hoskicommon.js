@@ -22,22 +22,26 @@ hoski.showMessage = function(form, jqXHR, defaultMessage) {
   if (jqXHR) {
     var messageId = $(jqXHR.responseText).attr("id");
     var status = jqXHR.status;
-    var e = form.find("#" + messageId).add(".e" + status);
+    e = form.find("#" + messageId);
+
+    if (e.length === 0) {
+      e = e.add(".e" + status);
+    }
   }
-  
-  if (defaultMessage) {
+
+  if (e.length === 0 && defaultMessage) {
     e = e.add(defaultMessage);
   }
 
   if (e.first().show().size() > 0) {
     var scrollTop = e.offset().top - 50;
     $('html,body').animate({scrollTop: scrollTop}, 500);
-    
+
     return true;
   } else {
     return false;
   }
-  
+
 }
 
 $(function() {
@@ -54,9 +58,9 @@ $(function() {
       $("a[href='" + href + "']").data("hoskipopup", popup);
 
       $("body").append(popup);
-      popup.dialog({ autoOpen: false, 
-		     width: Math.min(800, $("body").width()), 
-		     modal: true, 
+      popup.dialog({ autoOpen: false,
+		     width: Math.min(800, $("body").width()),
+		     modal: true,
 		     dialogClass: "hoskipopup" });
       popup.load(a.attr("href"));
     }
