@@ -85,14 +85,17 @@ public class InspectionOptServlet extends HttpServlet {
           Event event = (Event) entities.newInstance(eventEntity);
           Day day = (Day) event.get(Event.EventDate);
           List<Event> inspectionEvents = events.getEvents(Event.EventType.INSPECTION, day, 3);
-          if (!inspectionEvents.isEmpty()) {
-            out.println("<option value='" + Event.EVENT_KEY_CHOOSE + "' selected='selected'>Valitse vaihtoehto</option>");
-          }
+          boolean selected = true;
           for (Event inspectionEvent : inspectionEvents) {
             Key inspectionKey = inspectionEvent.createKey();
             String keyString = KeyFactory.keyToString(inspectionKey);
             KeyInfo keyInfo = new KeyInfo(entities, events, null, "", inspectionKey, authenticated);
-            out.println("<option value='" + keyString + "'>" + keyInfo.getLabel() + "</option>");
+            if (selected) {
+              out.println("<option selected='true' value='" + keyString + "'>" + keyInfo.getLabel() + "</option>");
+            } else {
+              out.println("<option value='" + keyString + "'>" + keyInfo.getLabel() + "</option>");
+            }
+            selected = false;
           }
           out.println("<option value=''>" + "Varaan myöhemmin" + "</option>");
         }
