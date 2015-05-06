@@ -10,7 +10,7 @@
     <groupId>fi.hoski</groupId>
     <artifactId>hoski-weblib</artifactId>
     <packaging>war</packaging>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>Hoski Weblib</name>
     <description>HoskiWebapp is a java web application in Google App Engine</description>
     <url>https://github.com/tvesalainen/${project.artifactId}</url>
