@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $(function() {
+  var dialog = $("#admin-dialog").dialog({autoOpen: false});
     
   $(".load").each(function(i, tag)
   {
@@ -29,6 +30,9 @@ $(function() {
 
   hoskievents.load(hoskieventservice, function() {
     hoskievents.removeClass("ajaxload");
+    $("[data-hoski-key]").mousedown(function(e){
+        adminEvent(e, this);
+    });
   });
 
   var hoskiweekly = $("#hoskiweekly");
@@ -51,7 +55,7 @@ $(function() {
   if (hoskireservations.size() > 0) {
     var tmp = $("meta[name='hoskireservations']").attr("content");
     var hoskireservationservice = tmp + 
-      location.search.replace("?", tmp.indexOf("?") != -1 ? "&" : "?");
+      location.search.replace("?", tmp.indexOf("?") !== -1 ? "&" : "?");
     hoskireservationslink.attr("href", hoskireservationservice);
     hoskireservations.load(hoskireservationservice + " tbody > *", function() {
       hoskireservations.removeClass("ajaxload");
@@ -59,5 +63,15 @@ $(function() {
       hoskireservations.closest("table").tablesorter();
     });
   }
+
+function adminEvent(e, el){
+    if (e.which === 3){
+        var key = $(el).attr("data-hoski-key");
+        $("#admin-dialog-attachments").load("/admin", {'key': key}, function(){
+            dialog.dialog("open");
+        });
+    }
+}
 });
+
 

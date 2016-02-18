@@ -72,6 +72,7 @@ public class MenuServlet extends HttpServlet {
   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
     response.setContentType("text/html;charset=UTF-8");
+    log("here");
     PrintWriter out = response.getWriter();
     boolean authenticated = request.isUserInRole("member");
     try {
@@ -140,7 +141,10 @@ public class MenuServlet extends HttpServlet {
     if (!t.isEmpty()) {
       out.println("<ul class=\"l" + level + "\">");
       for (Key key : rev ? t.descendingKeySet() : t.navigableKeySet()) {
-        out.println("<li><p class=\"l" + level + "\">" + keyToString(key, c, kind, authenticated) + "</p>");
+        out.println("<li><p class=\"l" + 
+                level + 
+                "\" data-hoski-key=\""+KeyFactory.keyToString(key)+"\">" + 
+                keyToString(key, c, kind, authenticated) + "</p>");
         printTree(out, t.get(key), c, kind, level + 1, authenticated, rev);
         out.println("</li>");
       }
