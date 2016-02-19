@@ -69,6 +69,12 @@ function adminEvent(e, el){
         var key = $(el).attr("data-hoski-key");
         $("#admin-dialog-attachments").load("/admin", {'key': key}, function(){
             dialog.dialog("open");
+            $("#chooseFile").on("click", function(){
+                $("#attachmentFile").click();
+                $("#attachmentFile").on("change", function(){
+                    $("#attachmentFilename").val($("#attachmentFile").val());
+                });
+            });
         });
     }
 }

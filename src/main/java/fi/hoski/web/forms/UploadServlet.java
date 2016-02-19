@@ -112,6 +112,10 @@ public class UploadServlet extends HttpServlet {
           entities.put(attachment);
         }
       }
+      String redir = request.getParameter("redir");
+      if (redir != null){
+        response.sendRedirect(redir);
+      }
     } catch (URISyntaxException ex) {
       throw new ServletException(ex);
     } catch (EntityNotFoundException ex) {
