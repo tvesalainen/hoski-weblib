@@ -16,6 +16,8 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import fi.hoski.datastore.DSUtils;
 import fi.hoski.datastore.DSUtilsImpl;
 import fi.hoski.datastore.Races;
@@ -26,14 +28,17 @@ import fi.hoski.datastore.repository.DataObject;
 import fi.hoski.datastore.repository.RaceEntry;
 import fi.hoski.datastore.repository.RaceSeries;
 import fi.hoski.datastore.repository.RaceFleet;
+import fi.hoski.datastore.repository.Year;
 import fi.hoski.mail.MailService;
 import fi.hoski.mail.MailServiceImpl;
 import fi.hoski.sailwave.Competitor;
 import fi.hoski.sailwave.SailWaveFile;
+import fi.hoski.util.Day;
 import fi.hoski.util.LogWrapper;
 import fi.hoski.web.ServletLog;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -72,18 +77,69 @@ public class AdminServlet extends HttpServlet
     {
         try
         {
+            String referer = req.getHeader("referer");
+            boolean isRaceAdmin = isRaceAdmin(req, races);
             resp.setCharacterEncoding("UTF-8");
-            removeAttachments(req);
-            String keyStr = req.getParameter("key");
-            if (keyStr != null)
+            String action = req.getParameter("action");
+            if (action != null)
             {
-                printDialog(resp, keyStr);
-                return;
-            }
-            String downloadType = req.getParameter("download");
-            if (downloadType != null)
-            {
-                download(resp, downloadType);
+                if ("year".equals(action))
+                {
+                    printYear(resp.getWriter(), isRaceAdmin);
+                    return;
+                }
+                if (!isRaceAdmin)
+                {
+                    if ("login".equals(action))
+                    {
+                        printLoginDialog(resp, referer);
+                        return;
+                    }
+                    resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+                if ("auth".equals(action))
+                {
+                    return;
+                }
+                switch (action)
+                {
+                    case "login":
+                        break;
+                    case "logout":
+                        printLogoutDialog(resp, referer);
+                        break;
+                    case "download-sailwave-dialog":
+                        printSailWaveDialog(resp.getWriter(), getKey(req));
+                        break;
+                    case "remove-attachment-dialog":
+                        printRemoveAttachmentsDialog(resp.getWriter(), getKey(req), referer);
+                        break;
+                    case "add-attachment-dialog":
+                        printAddAttachmentDialog(resp.getWriter(), getKey(req), referer);
+                        break;
+                    case "download-sailwave":
+                        String downloadType = req.getParameter("download");
+                        download(resp, downloadType);
+                        break;
+                    case "remove-attachments":
+                        removeAttachments(req);
+                        break;
+                    default:
+                        throw new ServletException(action+" unknown");
+                }
+                String redir = req.getParameter("redir");
+                if (redir != null)
+                {
+                    resp.sendRedirect(redir);
+                }
+                else
+                {
+                    if (referer != null)
+                    {
+                        resp.sendRedirect(referer);
+                    }
+                }
                 return;
             }
         }
@@ -110,6 +166,8 @@ public class AdminServlet extends HttpServlet
     {
         switch (key.getKind())
         {
+            case Year.KIND:
+                return String.valueOf(key.getId());
             case RaceSeries.KIND:
                 Entity rs = datastore.get(key);
                 return (String) rs.getProperty(RaceSeries.EVENT);
@@ -122,42 +180,58 @@ public class AdminServlet extends HttpServlet
         }
     }
 
-    private void removeAttachments(HttpServletRequest req)
+    private void removeAttachments(HttpServletRequest req) throws EntityNotFoundException, IOException
     {
         String[] vals = req.getParameterValues("delAttachment");
         if (vals != null)
         {
-            List<Key> keys = new ArrayList<>();
+            List<Attachment> attachments = new ArrayList<>();
             for (String val : vals)
             {
-                keys.add(KeyFactory.stringToKey(val));
+                Key key = KeyFactory.stringToKey(val);
+                attachments.add((Attachment) entities.newInstance(key));
             }
-            datastore.delete(keys);
+            entities.removeAttachments(attachments);
         }
     }
 
-    private void printDialog(HttpServletResponse resp, String keyStr) throws ServletException, IOException
+    private void printSailWaveDialog(PrintWriter out, Key key) throws ServletException
     {
-        try {
-            log(keyStr);
-            Key key = KeyFactory.stringToKey(keyStr);
-            PrintWriter out = resp.getWriter();
+        try
+        {
+            if (
+                    RaceSeries.KIND.equals(key.getKind()) ||
+                    RaceFleet.Kind.equals(key.getKind())
+                    )
+            {
+                out.println("<h1>"+description(key)+"</h1>");
+                // downloads
+                out.println("<form id=\"downloadSailWaveForm\" method=\"post\" action=\"/admin?action=download-sailwave\">");
+                out.println("<fieldset>");
+                out.println("<legend>"+text("downloadSailWave")+"</legend>");
+                out.println("<input type=\"text\" style=\"display: none\" name=\"download\" value=\"" + KeyFactory.keyToString(key) + "\">");
+                out.println("<input type=\"submit\" value=\""+text("download")+"\">");
+                out.println("</fieldset>");
+                out.println("</form>");
+            }
+        }
+        catch (EntityNotFoundException ex)
+        {
+            throw new ServletException(ex);
+        }
+    }
+    private void printRemoveAttachmentsDialog(PrintWriter out, Key key, String redir) throws ServletException
+    {
+        try
+        {
             out.println("<h1>"+description(key)+"</h1>");
-            // downloads
-            out.println("<form id=\"downloadSailWaveForm\" method=\"post\" action=\"/admin\">");
-            out.println("<fieldset>");
-            out.println("<legend>"+text("downloadSailWave")+"</legend>");
-            out.println("<input type=\"text\" style=\"display: none\" name=\"download\" value=\"" + keyStr + "\">");
-            out.println("<input type=\"submit\" value=\""+text("download")+"\">");
-            out.println("</fieldset>");
-            out.println("</form>");
             // remove attachments
             Query query = new Query(Attachment.KIND, key);
             PreparedQuery pq = datastore.prepare(query);
             Iterator<Entity> it = pq.asIterator();
             if (it.hasNext())
             {
-                out.println("<form id=\"removeAttachmentForm\" method=\"post\" action=\"/admin\">");
+                out.println("<form id=\"removeAttachmentForm\" method=\"post\" action=\"/admin?action=remove-attachments\">");
                 out.println("<fieldset>");
                 out.println("<legend>"+text("Attachments")+"</legend>");
                 while (it.hasNext())
@@ -167,25 +241,35 @@ public class AdminServlet extends HttpServlet
                     String title = (String) e.getProperty("Title");
                     out.println("<input type=\"checkbox\" name=\"delAttachment\" value=\""+aKey+"\">"+title+"<br>");
                 }
+                out.println("<input type=\"text\" style=\"display: none\" name=\""+redir+"\" value=\"/races/\">");
                 out.println("<input type=\"submit\" value=\""+text("remove")+"\">");
                 out.println("</fieldset>");
                 out.println("</form>");
             }
+        }
+        catch (EntityNotFoundException ex)
+        {
+            throw new ServletException(ex);
+        }
+    }
+    private void printAddAttachmentDialog(PrintWriter out, Key key, String redir) throws ServletException
+    {
+        try
+        {
+            out.println("<h1>"+description(key)+"</h1>");
             // add attachment
             BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
             out.println("<form id=\"addAttachmentForm\" action=\""+blobstoreService.createUploadUrl("/upload")+"\"  method=\"post\" enctype=\"multipart/form-data\">");
             out.println("<fieldset>");
             out.println("<legend>"+text("addAttachment")+"</legend>");
-            out.println("<select name=\"type\">");
             for (Type type : Type.values())
             {
-                out.println("<option value=\""+type.name()+"\">"+text(type.name())+"</option>");
+                out.println("<input type=\"radio\" name=\"type\" value=\""+type.name()+"\" required>"+text(type.name())+"<br>");
             }
-            out.println("</select>");
-            out.println("<input type=\"text\" style=\"display: none\" name=\"attachTo\" value=\"" + keyStr + "\">");
-            out.println("<input type=\"text\" style=\"display: none\" name=\"redir\" value=\"/races/\">");
+            out.println("<input type=\"text\" style=\"display: none\" name=\"attachTo\" value=\"" + KeyFactory.keyToString(key) + "\">");
+            out.println("<input type=\"text\" style=\"display: none\" name=\""+redir+"\" value=\"/races/\">");
             out.println("<label for=\"attachmentTitle\">"+text("Title")+"</label>");
-            out.println("<input id=\"attachmentTitle\" type=\"text\" name=\"title\">");
+            out.println("<input id=\"attachmentTitle\" type=\"text\" name=\"title\" required>");
             out.println("<input id=\"chooseFile\" type=\"button\" value=\""+text("chooseFile")+"\">");
             out.println("<input id=\"attachmentFile\" required style=\"visibility: hidden; position: absolute;\" type=\"file\" name=\"file\">");
             out.println("<input id=\"attachmentFilename\" type=\"text\" readonly >");
@@ -194,13 +278,18 @@ public class AdminServlet extends HttpServlet
             out.println("</form>");
             out.flush();
         }
-        catch (EntityNotFoundException ex) {
+        catch (EntityNotFoundException ex)
+        {
             throw new ServletException(ex);
         }
     }
 
-    private void download(HttpServletResponse resp, String keyStr) throws EntityNotFoundException, IOException
+    private void download(HttpServletResponse resp, String keyStr) throws EntityNotFoundException, IOException, ServletException
     {
+        if (keyStr == null)
+        {
+            throw new ServletException("no key");
+        }
         Key key = KeyFactory.stringToKey(keyStr);
         DataObject dataObject = entities.newInstance(key);
         List<RaceEntry> entryList = races.getRaceEntriesFor(dataObject);
@@ -226,6 +315,53 @@ public class AdminServlet extends HttpServlet
         resp.setContentType("application/x-sailwave; name="+event+".blw");
         resp.setHeader("Content-Disposition", "attachment; filename=\""+event+".blw\"");
         swf.write(resp.getOutputStream());
+    }
+
+    private Key getKey(HttpServletRequest req) throws ServletException
+    {
+        String keyStr = req.getParameter("key");
+        if (keyStr == null)
+        {
+            throw new ServletException("key missing");
+        }
+        return KeyFactory.stringToKey(keyStr);
+    }
+
+    private void printYear(PrintWriter out, boolean authenticated)
+    {
+        if (authenticated)
+        {
+            Key yearKey = entities.getYearKey();
+            out.println("<span data-hoski-key=\""+KeyFactory.keyToString(yearKey)+"\">"+new Day().getYear()+"</span>");
+        }
+        else
+        {
+            out.println(new Day().getYear());
+        }
+    }
+
+    public static final boolean isRaceAdmin(HttpServletRequest req, Races races)
+    {
+        Principal user = req.getUserPrincipal();
+        System.err.println("logged="+user);
+        if (user != null)
+        {
+            System.err.println("logged="+user.toString());
+            return races.isRaceAdmin(user.getName());
+        }
+        return false;
+    }
+
+    private void printLoginDialog(HttpServletResponse resp, String redir) throws IOException
+    {
+        UserService userService = UserServiceFactory.getUserService();
+        resp.sendRedirect(userService.createLoginURL(redir));
+    }
+
+    private void printLogoutDialog(HttpServletResponse resp, String redir) throws IOException
+    {
+        UserService userService = UserServiceFactory.getUserService();
+        resp.sendRedirect(userService.createLogoutURL(redir));
     }
 
 }
