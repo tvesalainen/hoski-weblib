@@ -75,10 +75,12 @@ public class MenuServlet extends HttpServlet {
     log("here");
     PrintWriter out = response.getWriter();
     boolean isMember = request.isUserInRole("member");
+    boolean isRaceAdmin = AdminServlet.isRaceAdmin(request, races);
+    
     try {
       ParameterContext c = new ParameterContext(this, request);
       log(c.toString());
-      printMenu(out, c, isMember);
+      printMenu(out, c, isMember, isRaceAdmin);
     } catch (EntityNotFoundException ex) {
       throw new ServletException(ex);
     } finally {
@@ -86,7 +88,7 @@ public class MenuServlet extends HttpServlet {
     }
   }
 
-  private void printMenu(PrintWriter out, ParameterContext c, boolean isMember) throws EntityNotFoundException, ServletException {
+  private void printMenu(PrintWriter out, ParameterContext c, boolean isMember, boolean isRaceAdmin) throws EntityNotFoundException, ServletException {
     NavigableMap<Key, NavigableMap> root = new TreeMap<>();
     Deque<Key> stack = new ArrayDeque<>();
     String kind = c.getParameter(MENUKIND);
@@ -134,18 +136,23 @@ public class MenuServlet extends HttpServlet {
       root = entry.getValue();
       depth--;
     }
-    printTree(out, root, c, kind, 1, isMember, rev);
+    printTree(out, root, c, kind, 1, isMember, isRaceAdmin, rev);
   }
 
-  private void printTree(PrintWriter out, NavigableMap<Key, NavigableMap> t, ParameterContext c, String kind, int level, boolean isMember, boolean rev) throws EntityNotFoundException {
+  private void printTree(PrintWriter out, NavigableMap<Key, NavigableMap> t, ParameterContext c, String kind, int level, boolean isMember, boolean isRaceAdmin, boolean rev) throws EntityNotFoundException {
     if (!t.isEmpty()) {
       out.println("<ul class=\"l" + level + "\">");
       for (Key key : rev ? t.descendingKeySet() : t.navigableKeySet()) {
-        out.println("<li><p class=\"l" + 
-                level + 
-                "\" data-hoski-key=\""+KeyFactory.keyToString(key)+"\">" + 
-                keyToString(key, c, kind, isMember) + "</p>");
-        printTree(out, t.get(key), c, kind, level + 1, isMember, rev);
+        out.print("<li><p class=\"l") ;
+        out.print(level);
+        if (isRaceAdmin){
+          out.print("\"");
+          out.print(" data-hoski-key=\""+KeyFactory.keyToString(key));
+        }
+        out.print("\">"); 
+        out.print(keyToString(key, c, kind, isMember));
+        out.println("</p>");
+        printTree(out, t.get(key), c, kind, level + 1, isMember, isRaceAdmin, rev);
         out.println("</li>");
       }
       out.println("</ul>");
