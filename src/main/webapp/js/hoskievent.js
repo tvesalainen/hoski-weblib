@@ -16,7 +16,12 @@
 */
 $(function() {
   var dialog = $("#admin-dialog").dialog({autoOpen: false});
-    
+  var sailWaveDialog = $("#admin-dialog-sailwave").dialog({autoOpen: false});
+  var removeAttachmentDialog = $("#admin-dialog-remove-attachment").dialog({autoOpen: false});
+  var addAttachmentDialog = $("#admin-dialog-add-attachment").dialog({autoOpen: false});
+
+  $(".hoski-year").load("/admin", {'action': 'year'});
+      
   $(".load").each(function(i, tag)
   {
     $(this).load($(this).attr("title"), function() {
@@ -67,15 +72,35 @@ $(function() {
 function adminEvent(e, el){
     if (e.which === 3){
         var key = $(el).attr("data-hoski-key");
-        $("#admin-dialog-attachments").load("/admin", {'key': key}, function(){
+        $.post("/admin", {'action': 'auth'}, function(res){
             dialog.dialog("open");
-            $("#chooseFile").on("click", function(){
-                $("#attachmentFile").click();
-                $("#attachmentFile").on("change", function(){
-                    $("#attachmentFilename").val($("#attachmentFile").val());
+        });
+        $("#admin-dialog-sailwave-button").on("click", function(){
+            $("#admin-dialog-sailwave").load("/admin", {'action': 'download-sailwave-dialog', 'key': key}, function(){
+                sailWaveDialog.dialog("open");
+                dialog.dialog("close");
+            });
+        });
+        $("#admin-dialog-remove-attachment-button").on("click", function(){
+            $("#admin-dialog-remove-attachment").load("/admin", {'action': 'remove-attachment-dialog', 'key': key}, function(){
+                removeAttachmentDialog.dialog("open");
+                dialog.dialog("close");
+            });
+        });
+        $("#admin-dialog-add-attachment-button").on("click", function(){
+            $("#admin-dialog-add-attachment").load("/admin", {'action': 'add-attachment-dialog', 'key': key}, function(){
+                addAttachmentDialog.dialog("open");
+                dialog.dialog("close");
+                $("#chooseFile").on("click", function(){
+                    $("#attachmentFile").click();
+                    $("#attachmentFile").on("change", function(){
+                        $("#attachmentFilename").val($("#attachmentFile").val());
+                    });
                 });
             });
         });
+        
+        
     }
 }
 });
