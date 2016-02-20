@@ -74,11 +74,11 @@ public class MenuServlet extends HttpServlet {
     response.setContentType("text/html;charset=UTF-8");
     log("here");
     PrintWriter out = response.getWriter();
-    boolean authenticated = request.isUserInRole("member");
+    boolean isMember = request.isUserInRole("member");
     try {
       ParameterContext c = new ParameterContext(this, request);
       log(c.toString());
-      printMenu(out, c, authenticated);
+      printMenu(out, c, isMember);
     } catch (EntityNotFoundException ex) {
       throw new ServletException(ex);
     } finally {
@@ -86,7 +86,7 @@ public class MenuServlet extends HttpServlet {
     }
   }
 
-  private void printMenu(PrintWriter out, ParameterContext c, boolean authenticated) throws EntityNotFoundException, ServletException {
+  private void printMenu(PrintWriter out, ParameterContext c, boolean isMember) throws EntityNotFoundException, ServletException {
     NavigableMap<Key, NavigableMap> root = new TreeMap<>();
     Deque<Key> stack = new ArrayDeque<>();
     String kind = c.getParameter(MENUKIND);
@@ -134,26 +134,26 @@ public class MenuServlet extends HttpServlet {
       root = entry.getValue();
       depth--;
     }
-    printTree(out, root, c, kind, 1, authenticated, rev);
+    printTree(out, root, c, kind, 1, isMember, rev);
   }
 
-  private void printTree(PrintWriter out, NavigableMap<Key, NavigableMap> t, ParameterContext c, String kind, int level, boolean authenticated, boolean rev) throws EntityNotFoundException {
+  private void printTree(PrintWriter out, NavigableMap<Key, NavigableMap> t, ParameterContext c, String kind, int level, boolean isMember, boolean rev) throws EntityNotFoundException {
     if (!t.isEmpty()) {
       out.println("<ul class=\"l" + level + "\">");
       for (Key key : rev ? t.descendingKeySet() : t.navigableKeySet()) {
         out.println("<li><p class=\"l" + 
                 level + 
                 "\" data-hoski-key=\""+KeyFactory.keyToString(key)+"\">" + 
-                keyToString(key, c, kind, authenticated) + "</p>");
-        printTree(out, t.get(key), c, kind, level + 1, authenticated, rev);
+                keyToString(key, c, kind, isMember) + "</p>");
+        printTree(out, t.get(key), c, kind, level + 1, isMember, rev);
         out.println("</li>");
       }
       out.println("</ul>");
     }
   }
 
-  private String keyToString(Key key, ParameterContext c, String kind, boolean authenticated) throws EntityNotFoundException {
-    KeyInfo keyInfo = new KeyInfo(entities, events, races, c.toString(), key, authenticated);
+  private String keyToString(Key key, ParameterContext c, String kind, boolean isMember) throws EntityNotFoundException {
+    KeyInfo keyInfo = new KeyInfo(entities, events, races, c.toString(), key, isMember);
     if (key.getKind().equals(kind)) {
       if (c.getParameter(PROPERTIES) == null) {
         return keyInfo.getEditLink();
