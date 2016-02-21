@@ -22,6 +22,7 @@ import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.datastore.*;
 import fi.hoski.datastore.DSUtils;
 import fi.hoski.datastore.DSUtilsImpl;
+import fi.hoski.datastore.repository.Attachment;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -57,8 +58,37 @@ public class DownloadServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-    BlobKey blobKey = new BlobKey(request.getParameter("blob-key"));
-    blobstoreService.serve(blobKey, response);
+    try {
+        String blobKeyStr = null;
+        String attachmentKeyStr = request.getParameter("attachment-key");
+        if (attachmentKeyStr != null){
+            Key attachmentKey = KeyFactory.stringToKey(attachmentKeyStr);
+            Entity attachment = datastore.get(attachmentKey);
+            Link link = (Link) attachment.getProperty(Attachment.URL);
+            String url = link.getValue();
+            int idx = url.indexOf('=');
+            if (idx == -1){
+                throw new ServletException("idx == -1");
+            }
+            log(url);
+            blobKeyStr = url.substring(idx+1);
+            log(blobKeyStr);
+            String filename = (String) attachment.getProperty(Attachment.Filename);
+            log(filename);
+            response.setHeader("Content-Disposition", "attachment; filename=\""+filename+"\"");
+        } else {
+          blobKeyStr = request.getParameter("blob-key");
+        }
+        if (blobKeyStr != null){
+          BlobKey blobKey = new BlobKey(blobKeyStr);
+          blobstoreService.serve(blobKey, response);
+        } else {
+
+        }
+    }
+    catch (EntityNotFoundException ex){
+        throw new ServletException(ex);
+    }
   }
 
   /**
