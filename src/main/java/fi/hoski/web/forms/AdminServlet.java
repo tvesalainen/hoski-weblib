@@ -14,6 +14,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Link;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.users.UserService;
@@ -111,13 +112,13 @@ public class AdminServlet extends HttpServlet
                         break;
                     case "download-sailwave-dialog":
                         printSailWaveDialog(resp.getWriter(), getKey(req));
-                        break;
+                        return;
                     case "remove-attachment-dialog":
                         printRemoveAttachmentsDialog(resp.getWriter(), getKey(req), referer);
-                        break;
+                        return;
                     case "add-attachment-dialog":
                         printAddAttachmentDialog(resp.getWriter(), getKey(req), referer);
-                        break;
+                        return;
                     case "download-sailwave":
                         String downloadType = req.getParameter("download");
                         download(resp, downloadType);
@@ -238,8 +239,9 @@ public class AdminServlet extends HttpServlet
                 {
                     Entity e = it.next();
                     String aKey = KeyFactory.keyToString(e.getKey());
-                    String title = (String) e.getProperty("Title");
-                    out.println("<input type=\"checkbox\" name=\"delAttachment\" value=\""+aKey+"\">"+title+"<br>");
+                    String title = (String) e.getProperty(Attachment.TITLE);
+                    String filename = (String) e.getProperty(Attachment.Filename);
+                    out.println("<input type=\"checkbox\" name=\"delAttachment\" value=\""+aKey+"\">"+title+"-"+filename+"<br>");
                 }
                 out.println("<input type=\"text\" style=\"display: none\" name=\""+redir+"\" value=\"/races/\">");
                 out.println("<input type=\"submit\" value=\""+text("remove")+"\">");
@@ -267,11 +269,11 @@ public class AdminServlet extends HttpServlet
                 out.println("<input type=\"radio\" name=\"type\" value=\""+type.name()+"\" required>"+text(type.name())+"<br>");
             }
             out.println("<input type=\"text\" style=\"display: none\" name=\"attachTo\" value=\"" + KeyFactory.keyToString(key) + "\">");
-            out.println("<input type=\"text\" style=\"display: none\" name=\""+redir+"\" value=\"/races/\">");
+            out.println("<input type=\"text\" style=\"display: none\" name=\"redir\" value=\""+redir+"\">");
             out.println("<label for=\"attachmentTitle\">"+text("Title")+"</label>");
             out.println("<input id=\"attachmentTitle\" type=\"text\" name=\"title\" required>");
             out.println("<input id=\"chooseFile\" type=\"button\" value=\""+text("chooseFile")+"\">");
-            out.println("<input id=\"attachmentFile\" required style=\"visibility: hidden; position: absolute;\" type=\"file\" name=\"file\">");
+            out.println("<input id=\"attachmentFile\" required style=\"visibility: hidden; position: absolute;\" type=\"file\">");
             out.println("<input id=\"attachmentFilename\" type=\"text\" readonly >");
             out.println("<input type=\"submit\" value=\""+text("add")+"\">");
             out.println("</fieldset>");
@@ -299,7 +301,6 @@ public class AdminServlet extends HttpServlet
             log("no race for "+keyStr);
         }
         Blob swb = (Blob) raceSeries.get(RaceSeries.SAILWAVEFILE);
-        String event = (String) raceSeries.get(RaceSeries.EVENT);
         SailWaveFile swf = new SailWaveFile(swb.getBytes());
         if (entryList != null)
         {
@@ -310,10 +311,10 @@ public class AdminServlet extends HttpServlet
                 swf.addCompetitor(competitor);
             }
         }
-        log(event);
+        String filename = description(key).replace(' ', '_');
         swf.deleteNotNeededFleets(entryList);
-        resp.setContentType("application/x-sailwave; name="+event+".blw");
-        resp.setHeader("Content-Disposition", "attachment; filename=\""+event+".blw\"");
+        resp.setContentType("application/x-sailwave; name="+filename+".blw");
+        resp.setHeader("Content-Disposition", "attachment; filename=\""+filename+".blw\"");
         swf.write(resp.getOutputStream());
     }
 

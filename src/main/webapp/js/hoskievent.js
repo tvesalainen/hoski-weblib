@@ -74,33 +74,49 @@ function adminEvent(e, el){
         var key = $(el).attr("data-hoski-key");
         $.post("/admin", {'action': 'auth'}, function(res){
             dialog.dialog("open");
-        });
-        $("#admin-dialog-sailwave-button").on("click", function(){
-            $("#admin-dialog-sailwave").load("/admin", {'action': 'download-sailwave-dialog', 'key': key}, function(){
-                sailWaveDialog.dialog("open");
-                dialog.dialog("close");
+            $("#admin-dialog-sailwave-button").one("click", function(){
+                $("#admin-dialog-sailwave").load("/admin", {'action': 'download-sailwave-dialog', 'key': key}, function(){
+                    sailWaveDialog.dialog("open");
+                    dialog.dialog("close");
+                    $(this).on('submit', function(){
+                        sailWaveDialog.dialog("close");
+                    });
+                });
             });
-        });
-        $("#admin-dialog-remove-attachment-button").on("click", function(){
-            $("#admin-dialog-remove-attachment").load("/admin", {'action': 'remove-attachment-dialog', 'key': key}, function(){
-                removeAttachmentDialog.dialog("open");
-                dialog.dialog("close");
+            $("#admin-dialog-remove-attachment-button").one("click", function(){
+                $("#admin-dialog-remove-attachment").load("/admin", {'action': 'remove-attachment-dialog', 'key': key}, function(){
+                    removeAttachmentDialog.dialog("open");
+                    dialog.dialog("close");
+                    $(this).on('submit', function(){
+                        removeAttachmentDialog.dialog("close");
+                    });
+                });
             });
-        });
-        $("#admin-dialog-add-attachment-button").on("click", function(){
-            $("#admin-dialog-add-attachment").load("/admin", {'action': 'add-attachment-dialog', 'key': key}, function(){
-                addAttachmentDialog.dialog("open");
-                dialog.dialog("close");
-                $("#chooseFile").on("click", function(){
-                    $("#attachmentFile").click();
-                    $("#attachmentFile").on("change", function(){
-                        $("#attachmentFilename").val($("#attachmentFile").val());
+            $("#admin-dialog-add-attachment-button").one("click", function(){
+                $("#admin-dialog-add-attachment").load("/admin", {'action': 'add-attachment-dialog', 'key': key}, function(){
+                    addAttachmentDialog.dialog("open");
+                    dialog.dialog("close");
+                    $(this).on('submit', function(){
+                        addAttachmentDialog.dialog("close");
+                    });
+                    $("#chooseFile").on("click", function(){
+                        $("#attachmentFile").click();
+                        $("#attachmentFile").on("change", function(){
+                            var filename = $(this).val();
+                            var idx = filename.lastIndexOf('\\');
+                            if (idx === -1){
+                                idx = filename.lastIndexOf('/');
+                            }
+                            if (idx !== -1){
+                                filename = filename.slice(idx+1);
+                            }
+                            $(this).attr('name', filename);
+                            $("#attachmentFilename").val(filename);
+                        });
                     });
                 });
             });
         });
-        
-        
     }
 }
 });
