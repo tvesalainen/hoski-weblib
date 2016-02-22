@@ -21,12 +21,22 @@ $(function() {
   var addAttachmentDialog = $("#admin-dialog-add-attachment").dialog({autoOpen: false});
 
   $(".hoski-year").load("/admin", {'action': 'year'});
+  $(".logout").hide();
+  $(".login").show();
       
   $(".load").each(function(i, tag)
   {
     $(this).load($(this).attr("title"), function() {
       $(this).removeClass("ajaxload");
       $(this).removeAttr("title");
+    $("[data-hoski-key]").mousedown(function(e){
+        adminEvent(e, this);
+    });
+    $("[data-hoski-key]").each(function(e){
+        $(".logout").show();
+        $(".login").hide();
+        return false;
+    });
     });
   });
     
@@ -37,6 +47,11 @@ $(function() {
     hoskievents.removeClass("ajaxload");
     $("[data-hoski-key]").mousedown(function(e){
         adminEvent(e, this);
+    });
+    $("[data-hoski-key]").each(function(e){
+        $(".logout").show();
+        $(".login").hide();
+        return false;
     });
   });
 

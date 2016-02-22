@@ -14,7 +14,6 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Link;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.users.UserService;
@@ -89,6 +88,11 @@ public class AdminServlet extends HttpServlet
                     printYear(resp.getWriter(), isRaceAdmin);
                     return;
                 }
+                if ("logout".equals(action))
+                {
+                    printLogoutDialog(resp, referer);
+                    return;
+                }
                 if (!isRaceAdmin)
                 {
                     if ("login".equals(action))
@@ -106,9 +110,6 @@ public class AdminServlet extends HttpServlet
                 switch (action)
                 {
                     case "login":
-                        break;
-                    case "logout":
-                        printLogoutDialog(resp, referer);
                         break;
                     case "download-sailwave-dialog":
                         printSailWaveDialog(resp.getWriter(), getKey(req));
