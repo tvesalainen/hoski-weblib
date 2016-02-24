@@ -145,6 +145,8 @@ public class MenuServlet extends HttpServlet {
       for (Key key : rev ? t.descendingKeySet() : t.navigableKeySet()) {
         out.print("<li><p class=\"l") ;
         out.print(level);
+        out.print(" ");
+        out.print(key.getKind());
         if (isRaceAdmin){
           out.print("\"");
           out.print(" data-hoski-key=\""+KeyFactory.keyToString(key));
