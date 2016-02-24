@@ -17,7 +17,7 @@
 $(function() {
   var dialog = $("#admin-dialog").dialog({autoOpen: false});
   var sailWaveDialog = $("#admin-dialog-sailwave").dialog({autoOpen: false});
-  var removeAttachmentDialog = $("#admin-dialog-remove-attachment").dialog({autoOpen: false});
+  var removeAttachmentDialog = $("#admin-dialog-remove-attachment").dialog({autoOpen: false, width: 1000});
   var addAttachmentDialog = $("#admin-dialog-add-attachment").dialog({autoOpen: false});
 
   $(".hoski-year").load("/admin", {'action': 'year'});
