@@ -4,13 +4,13 @@
     <parent>
         <groupId>fi.hoski</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.7</version>
+        <version>1.0.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>fi.hoski</groupId>
     <artifactId>hoski-weblib</artifactId>
     <packaging>war</packaging>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <name>Hoski Weblib</name>
     <description>HoskiWebapp is a java web application in Google App Engine</description>
     <url>https://github.com/tvesalainen/${project.artifactId}</url>
