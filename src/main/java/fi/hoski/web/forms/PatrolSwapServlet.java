@@ -21,6 +21,7 @@ import fi.hoski.datastore.PatrolShifts;
 import fi.hoski.datastore.PatrolShiftsImpl;
 import fi.hoski.datastore.Repository;
 import fi.hoski.datastore.SMSNotConfiguredException;
+import fi.hoski.datastore.TooLateException;
 import fi.hoski.datastore.repository.Options;
 import fi.hoski.datastore.repository.SwapRequest;
 import fi.hoski.sms.SMSException;
@@ -34,6 +35,8 @@ import java.util.ConcurrentModificationException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.mail.internet.AddressException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -215,6 +218,10 @@ public class PatrolSwapServlet extends HttpServlet {
       log(ex.getMessage(), ex);
       sendError(response, HttpServletResponse.SC_CONFLICT,
         "<div id=\"eConcurrentModification\">Concurrent modification.</div>");
+    } catch (TooLateException ex) {
+      log(ex.getMessage(), ex);
+      sendError(response, HttpServletResponse.SC_CONFLICT,
+        "<div id=\"eTooLate\">Too late to swap.</div>");
     }
   }
 
