@@ -41,6 +41,7 @@
         <dependency>
             <groupId>fi.hoski</groupId>
             <artifactId>hoski-lib</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
